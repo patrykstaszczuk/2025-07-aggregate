@@ -1,0 +1,28 @@
+# Hidden files (except ignores)
+.*
+!.github
+!.gitignore
+!.dockerignore
+!.env.example
+!.pre-commit-config.yaml
+
+# Backup files
+*~
+.*~
+*.swp
+*.bak
+
+# Python cache
+*.pyc
+*__pycache__*
+*egg-info*
+
+# Miscellaneous
+*.log
+*.sqlite*
+*.csv
+*.zip
+*.xlsx
+
+# ENV
+.env

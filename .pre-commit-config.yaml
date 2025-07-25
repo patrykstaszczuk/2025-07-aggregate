@@ -1,0 +1,56 @@
+### DISCLAIMER:
+### after adding new tool please run following command before commit:
+### pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-docstring-first
+    - id: check-toml
+    - id: check-yaml
+    - id: debug-statements
+
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v2.2.1
+    hooks:
+      - id: add-trailing-comma
+        args: [--py36-plus]
+
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        pass_filenames: false
+        entry: isort .
+        language: python
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        pass_filenames: false
+        entry: black .
+        language: python
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        pass_filenames: false
+        entry: pytest tests/integration tests/unit
+        language: python
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        pass_filenames: false
+        entry: mypy .
+        language: python
+        types: [python]

@@ -1,0 +1,40 @@
+[tool.black]
+target-version = ['py310']
+line-length = 120
+exclude = '''
+/(
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.flakeheaven_cache
+  | \.venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+py_version = 310
+skip = [".gitignore", ".dockerignore", ".*"]
+extend_skip = [".md", ".json"]
+skip_glob = [
+  "build/*",
+  ".venv/*",
+  ".mypy_cache/*",
+  ".pytest_cache/*",
+  ".flakeheaven_cache/*"
+]
+line_length = 120
+
+[tool.mypy]
+exclude = [
+  ".venv",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".flakeheaven_cache",
+  "build",
+  "tests",
+  "alembic",
+]
+check_untyped_defs = true
+ignore_missing_imports = true
+ignore_errors = false
