@@ -42,7 +42,7 @@ repos:
       - id: pytest
         name: pytest
         pass_filenames: false
-        entry: pytest tests/integration tests/unit
+        entry: bash -c 'PYTHONPATH=$PWD pytest tests/integration tests/unit'
         language: python
         types: [python]
 
