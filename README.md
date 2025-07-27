@@ -16,3 +16,12 @@ Uruchom projekt poleceniem:
 
 ```bash
 docker-compose -f docker-compose-dev.yml up
+```
+
+## Migracje bazy danych
+Do migracji używany jest alembic
+
+Aby uruchomić migracje należy wykonać polecenie:
+``alembic revision --autogenerate -m "krótki opis zmia" `` (połączenie z bazą danych musi być możliwe)
+
+migracja aplikowana jest w momencie startu aplikacji w docker-compose
