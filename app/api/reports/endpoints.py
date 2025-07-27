@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import case, distinct, func, select
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
+from app.transactions.currency_rate_provider import Currency, SimpleCurrencyRateToPlnProvider, UnsupportedCurrency
 from app.transactions.models import Transaction
 
 from .models import CustomerSummaryRead
@@ -22,11 +23,24 @@ def get_customer_summary(
     session: Session = Depends(get_session),
     customer_id: UUID | None = None,
 ):
+    currency_conversion = []
+    curr_converter = SimpleCurrencyRateToPlnProvider()
 
-    currency_conversion = case(
-        (Transaction.currency == "EUR", 4),
-        (Transaction.currency == "USD", 3),
-        (Transaction.currency == "PLN", 1.0),
+    currencies_in_transactions = session.execute(
+        select(distinct(Transaction.currency)).where(Transaction.customer_id == customer_id),
+    ).all()
+    try:
+        for row in currencies_in_transactions:
+            currency = Currency.from_str(row[0])
+            rate = curr_converter.get_currency_rate(currency)
+            currency_conversion.append(
+                (Transaction.currency == currency.value, rate),
+            )
+    except UnsupportedCurrency as e:
+        raise HTTPException(status_code=400, detail=f"Cannot prepare summary due to: {str(e)}")
+
+    currency_conversion = case(  # type: ignore
+        *currency_conversion,
         else_=1.0,
     )
 

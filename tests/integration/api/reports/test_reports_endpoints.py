@@ -1,5 +1,6 @@
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -54,3 +55,12 @@ def test_get_customer_summary(db_session) -> None:
         transaction_3_in_pln.timestamp.isoformat(),
         transaction_3_in_pln.timestamp.isoformat().replace("+00:00", "Z"),
     ]
+
+
+def test_should_raise_exception_if_transactions_are_in_unsupported_currency(db_session) -> None:
+    override_deps(db_session)
+    unsupported_currency = "xxx"
+    customer_id = uuid.uuid4()
+    create_transaction(db_session, currency=unsupported_currency, customer_id=customer_id)
+    response = client.get(app.url_path_for("customer-summary", customer_id=customer_id))
+    assert response.status_code == 400
