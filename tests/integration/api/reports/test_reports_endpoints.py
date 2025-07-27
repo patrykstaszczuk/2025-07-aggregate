@@ -31,7 +31,7 @@ def test_get_customer_summary(db_session) -> None:
     )
     transaction_3_in_pln = create_transaction(
         db_session,
-        amount="100",
+        amount=100,
         currency="PLN",
         customer_id=customer_id,
         quantity=1,
@@ -39,3 +39,18 @@ def test_get_customer_summary(db_session) -> None:
 
     response = client.get(app.url_path_for("customer-summary", customer_id=customer_id))
     response_json = response.json()
+    assert response.status_code == 200
+    assert (
+        response_json["total_cost_pln"]
+        == (
+            (transaction_1_in_eur.amount * transaction_1_in_eur.quantity) * 4
+            + (transaction_2_in_usd.amount * transaction_2_in_usd.quantity) * 3
+            + (transaction_3_in_pln.amount * transaction_3_in_pln.quantity)
+        )
+        == 1100
+    )
+    assert response_json["unique_products_count"] == 2
+    assert response_json["last_transaction_timestamp"] in [
+        transaction_3_in_pln.timestamp.isoformat(),
+        transaction_3_in_pln.timestamp.isoformat().replace("+00:00", "Z"),
+    ]
