@@ -68,5 +68,5 @@ def upload_transactions(
     except CSVHeaderInvalidException as e:
         raise HTTPException(status_code=400, detail=str(e))
     else:
-        process_transactions_file_local.delay(path=path)
+        process_transactions_file_local.delay(path=path, delimiter=delimiter)
     return TransactionsUploadRequestCreate(import_id=import_id)

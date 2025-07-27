@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from app.transactions.uploads.transactions_file_reader import LocalTransactionsFileReader
+from app.transactions.uploads.transactions_file_reader import StandardLocalTransactionsCSVFileReader
 
 
 @pytest.fixture
@@ -19,10 +19,10 @@ def fake_csv_file(tmp_path: Path) -> Path:
 
 
 def test_read_file_yields_all_lines(fake_csv_file):
-    reader = LocalTransactionsFileReader(str(fake_csv_file))
+    reader = StandardLocalTransactionsCSVFileReader(str(fake_csv_file), delimiter=",")
     lines = list(reader.read_file())
 
     assert len(lines) == 3
-    assert lines[0].startswith("transaction_id")
+    assert lines[0][0] == "transaction_id"
     assert "99.99" in lines[1]
     assert "149.50" in lines[2]
