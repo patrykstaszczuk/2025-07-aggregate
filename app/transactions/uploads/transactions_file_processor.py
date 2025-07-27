@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ValidationError
 
+from app.transactions.config import CSV_FILE_HEADERS_TO_ROW_MAP
+
 from .transactions_file_reader import FileReader
 
 
@@ -31,13 +33,13 @@ class TransactionsFileProcessor:
             try:
                 # let the pydantic do the work
                 yield Transaction(
-                    transaction_id=row[0],  # type: ignore[arg-type]
-                    timestamp=row[1],  # type: ignore[arg-type]
-                    amount=row[2],  # type: ignore[arg-type]
-                    currency=row[3],  # type: ignore[arg-type]
-                    customer_id=row[4],  # type: ignore[arg-type]
-                    product_id=row[5],  # type: ignore[arg-type]
-                    quantity=row[6],  # type: ignore[arg-type]
+                    transaction_id=row[CSV_FILE_HEADERS_TO_ROW_MAP["transaction_id"]],  # type: ignore[arg-type]
+                    timestamp=row[CSV_FILE_HEADERS_TO_ROW_MAP["timestamp"]],  # type: ignore[arg-type]
+                    amount=row[CSV_FILE_HEADERS_TO_ROW_MAP["amount"]],  # type: ignore[arg-type]
+                    currency=row[CSV_FILE_HEADERS_TO_ROW_MAP["currency"]],  # type: ignore[arg-type]
+                    customer_id=row[CSV_FILE_HEADERS_TO_ROW_MAP["customer_id"]],  # type: ignore[arg-type]
+                    product_id=row[CSV_FILE_HEADERS_TO_ROW_MAP["product_id"]],  # type: ignore[arg-type]
+                    quantity=row[CSV_FILE_HEADERS_TO_ROW_MAP["quantity"]],  # type: ignore[arg-type]
                 )
             except IndexError:
                 yield TransactionRowError(row_line=row_number, error="Invalid row structure, cannot parse data")
