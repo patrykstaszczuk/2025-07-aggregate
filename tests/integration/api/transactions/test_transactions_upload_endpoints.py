@@ -9,11 +9,7 @@ from tests.integration.api.common import override_deps
 client = TestClient(app)
 
 
-def test_transactions_upload_should_save_file_to_future_processing_and_return_201(
-    db_session,
-    monkeypatch,
-    tmp_path,
-) -> None:
+def test_transactions_upload_should_save_file_to_future_processing_and_return_201(db_session, tmp_path) -> None:
     override_deps(db_session)
     app.dependency_overrides[get_media_dir] = lambda: str(tmp_path / "media")
 
@@ -26,7 +22,7 @@ def test_transactions_upload_should_save_file_to_future_processing_and_return_20
     fake_file.name = "test.csv"
 
     response = client.post(
-        app.url_path_for("transactions-upload") + "?delimiter=;",
+        app.url_path_for("transactions-upload") + "?delimiter=,",
         files={"file": ("test.csv", fake_file, "text/csv")},
     )
     response_json = response.json()
@@ -36,3 +32,22 @@ def test_transactions_upload_should_save_file_to_future_processing_and_return_20
 
     saved_file_path = tmp_path / "media" / "transactions" / f"{response_json['import_id']}.csv"
     assert saved_file_path.exists()
+
+
+def test_should_return_400_if_file_has_invalid_header(db_session, tmp_path) -> None:
+    override_deps(db_session)
+    app.dependency_overrides[get_media_dir] = lambda: str(tmp_path / "media")
+
+    fake_file = BytesIO(
+        b"invalid,timestamp,amount,currency,xyz,product_id,quantity\n"
+        b"550e8400-e29b-41d4-a716-446655440000,2025-07-27T15:30:00Z,99.99,PLN,11111111-1111-1111-1111-111111111111,22222222-2222-2222-2222-222222222222,1\n",
+    )
+
+    fake_file.name = "test.csv"
+
+    response = client.post(
+        app.url_path_for("transactions-upload") + "?delimiter=,",
+        files={"file": ("test.csv", fake_file, "text/csv")},
+    )
+
+    assert response.status_code == 400

@@ -2,7 +2,7 @@ import os
 import uuid
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,7 +10,7 @@ from app.api.pagination import PaginatedInput, PaginatedResponse, Paginator
 from app.core.media import get_media_dir
 from app.core.session import get_session
 from app.transactions.models import Transaction
-from app.transactions.uploads import LocalTransactionsCsvFileSaver
+from app.transactions.uploads import CSVHeaderInvalidException, LocalTransactionsCsvFileSaver
 
 from .models import TransactionRead, TransactionsUploadRequestCreate
 
@@ -53,11 +53,15 @@ async def get_transaction_list(
 
 
 @router.post("/upload", name="transactions-upload", response_model=TransactionsUploadRequestCreate, status_code=201)
-async def upload_transactions(
+def upload_transactions(
     file: UploadFile = File(),
+    delimiter: str = Query(),
     session: Session = Depends(get_session),
     media_dir: str = Depends(get_media_dir),
 ):
     import_id = uuid.uuid4()
-    await LocalTransactionsCsvFileSaver(media_dir=media_dir).save(import_id=import_id, file=file)
+    try:
+        LocalTransactionsCsvFileSaver(media_dir=media_dir, delimiter=delimiter).save(import_id=import_id, file=file)
+    except CSVHeaderInvalidException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return TransactionsUploadRequestCreate(import_id=import_id)
