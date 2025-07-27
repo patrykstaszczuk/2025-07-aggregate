@@ -1,16 +1,10 @@
-import uuid
-
 from fastapi.testclient import TestClient
 
-from app.core.session import get_session
 from app.main import app
 from tests.factories import create_transaction
+from tests.integration.api.common import override_deps
 
 client = TestClient(app)
-
-
-def override_deps(db_session):
-    app.dependency_overrides[get_session] = lambda: db_session
 
 
 def test_read_transaction_by_id(db_session) -> None:
