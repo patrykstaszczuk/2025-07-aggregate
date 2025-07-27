@@ -28,7 +28,7 @@ def get_total_cost_pln_for_customer(session: Session, customer_id: UUID) -> floa
         select(func.count(Transaction.transaction_id)).where(Transaction.customer_id == customer_id),
     ).scalar()
     if not transaction_count:
-        return 0.0
+        return None
     curr_converter = SimpleCurrencyRateToPlnProvider()
     currencies_in_transactions = session.execute(
         select(distinct(Transaction.currency)).where(Transaction.customer_id == customer_id),
@@ -55,6 +55,11 @@ def get_sold_qty_of_product(session: Session, product_id: UUID) -> int | None:
 
 
 def get_total_income_for_product_in_pln(session: Session, product_id: UUID) -> float | None:
+    transaction_count = session.execute(
+        select(func.count(Transaction.transaction_id)).where(Transaction.product_id == product_id),
+    ).scalar()
+    if not transaction_count:
+        return None
     curr_converter = SimpleCurrencyRateToPlnProvider()
     currencies_in_transactions_for_product = session.execute(
         select(distinct(Transaction.currency)).where(Transaction.product_id == product_id),
