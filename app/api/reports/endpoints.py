@@ -53,7 +53,11 @@ def get_product_summary(
     product_id: UUID = Path(),
     session: Session = Depends(get_session),
 ):
-
+    transaction_count = session.execute(
+        select(func.count(Transaction.transaction_id)).where(Transaction.product_id == product_id),
+    ).scalar()
+    if not transaction_count:
+        raise HTTPException(status_code=404, detail=f"No transactions for product={product_id}")
     return ProductSummaryRead(
         sold_qty=get_sold_qty_of_product(session, product_id=product_id),
         total_income_pln=get_total_income_for_product_in_pln(session, product_id=product_id),

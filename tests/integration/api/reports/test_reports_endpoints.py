@@ -43,6 +43,8 @@ def test_get_customer_summary(db_session) -> None:
         amount=500,
         currency="PLN",
     )
+    rate_for_eur = SimpleCurrencyRateToPlnProvider._RATES[Currency.EUR]
+    rate_for_usd = SimpleCurrencyRateToPlnProvider._RATES[Currency.USD]
 
     response = client.get(app.url_path_for("customer-summary", customer_id=customer_id))
     response_json = response.json()
@@ -50,8 +52,8 @@ def test_get_customer_summary(db_session) -> None:
     assert (
         response_json["total_cost_pln"]
         == (
-            (transaction_1_in_eur.amount * transaction_1_in_eur.quantity) * 4
-            + (transaction_2_in_usd.amount * transaction_2_in_usd.quantity) * 3
+            (transaction_1_in_eur.amount * transaction_1_in_eur.quantity) * rate_for_eur
+            + (transaction_2_in_usd.amount * transaction_2_in_usd.quantity) * rate_for_usd
             + (transaction_3_in_pln.amount * transaction_3_in_pln.quantity)
         )
         == 1100
@@ -61,6 +63,12 @@ def test_get_customer_summary(db_session) -> None:
         transaction_3_in_pln.timestamp.isoformat(),
         transaction_3_in_pln.timestamp.isoformat().replace("+00:00", "Z"),
     ]
+
+
+def test_customer_summary_should_return_404_if_no_transaction_for_given_customer(db_session) -> None:
+    override_deps(db_session)
+    response = client.get(app.url_path_for("customer-summary", customer_id=uuid.uuid4()))
+    assert response.status_code == 404
 
 
 def test_customer_summary_should_raise_exception_if_transactions_are_in_unsupported_currency(db_session) -> None:
@@ -91,3 +99,9 @@ def test_get_product_summary(db_session) -> None:
         + (transaction_1_eur.amount * transaction_1_eur.quantity) * rate_for_eur
     )
     assert response_json["total_number_of_customers"] == 2
+
+
+def test_product_summary_should_return_404_if_no_transaction_for_given_product(db_session) -> None:
+    override_deps(db_session)
+    response = client.get(app.url_path_for("product-summary", product_id=uuid.uuid4()))
+    assert response.status_code == 404
