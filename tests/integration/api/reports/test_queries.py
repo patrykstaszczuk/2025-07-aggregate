@@ -6,7 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.api.reports.queries import (
     get_last_transaction_timestamp_for_customer,
+    get_sold_qty_of_product,
     get_total_cost_pln_for_customer,
+    get_total_income_for_product_in_pln,
+    get_total_number_of_unique_customers_for_product,
     get_unique_products_count_for_customer,
 )
 from app.transactions.currency_rate_provider import (
@@ -208,3 +211,119 @@ def test_currency_rate_provider_invalid():
     provider = SimpleCurrencyRateToPlnProvider()
     with pytest.raises(ValueError):
         provider.get_currency_rate("GBP")  # type: ignore
+
+
+def test_get_sold_qty_of_product(db_session: Session, customer_id):
+    product_id = uuid4()
+    db_session.add_all(
+        [
+            Transaction(
+                customer_id=customer_id,
+                amount=10,
+                quantity=2,
+                currency="PLN",
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+            Transaction(
+                customer_id=customer_id,
+                amount=15,
+                quantity=3,
+                currency="PLN",
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+        ],
+    )
+    db_session.commit()
+
+    result = get_sold_qty_of_product(db_session, product_id)
+    assert result == 5
+
+
+def test_get_sold_qty_of_product_none(db_session: Session):
+    result = get_sold_qty_of_product(db_session, uuid4())
+    assert result is None or result == 0
+
+
+def test_get_total_income_for_product_in_pln(db_session: Session, customer_id):
+    product_id = uuid4()
+    db_session.add_all(
+        [
+            Transaction(
+                customer_id=customer_id,
+                amount=10,
+                quantity=1,
+                currency="USD",  # * 3.0
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+            Transaction(
+                customer_id=customer_id,
+                amount=20,
+                quantity=1,
+                currency="EUR",  # * 4.0
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+            Transaction(
+                customer_id=customer_id,
+                amount=30,
+                quantity=1,
+                currency="PLN",  # * 1.0
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+        ],
+    )
+    db_session.commit()
+
+    result = get_total_income_for_product_in_pln(db_session, product_id)
+    expected = (10 * 1 * 3.0) + (20 * 1 * 4.0) + (30 * 1 * 1.0)
+    assert result == expected
+
+
+def test_get_total_income_for_product_none(db_session: Session):
+    result = get_total_income_for_product_in_pln(db_session, uuid4())
+    assert result is None
+
+
+def test_get_total_number_of_unique_customers_for_product(db_session: Session, customer_id, another_customer_id):
+    product_id = uuid4()
+    db_session.add_all(
+        [
+            Transaction(
+                customer_id=customer_id,
+                amount=10,
+                quantity=1,
+                currency="PLN",
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+            Transaction(
+                customer_id=customer_id,
+                amount=15,
+                quantity=2,
+                currency="PLN",
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+            Transaction(
+                customer_id=another_customer_id,
+                amount=25,
+                quantity=1,
+                currency="PLN",
+                product_id=product_id,
+                timestamp=datetime.now(),
+            ),
+        ],
+    )
+    db_session.commit()
+
+    result = get_total_number_of_unique_customers_for_product(db_session, product_id)
+    assert result == 2
+
+
+def test_get_total_number_of_unique_customers_for_product_none(db_session: Session):
+    result = get_total_number_of_unique_customers_for_product(db_session, uuid4())
+    assert result is None or result == 0
