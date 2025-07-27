@@ -6,7 +6,7 @@ import pytest
 
 from app.transactions.models import Transaction as TransactionORMModel
 from app.transactions.tasks import process_transactions_file_local
-from app.transactions.uploads.transactions_file_processor import Transaction
+from app.transactions.uploads.transactions_file_processor import Transaction, TransactionRowError
 
 
 @pytest.fixture
@@ -61,6 +61,43 @@ def test_processor_should_skip_duplicated_rows(mock_processor_class, db_session)
             customer_id=uuid4(),
             product_id=uuid4(),
             quantity=1,
+        ),
+        Transaction(
+            transaction_id=uuid4(),
+            timestamp=datetime.now(timezone.utc),
+            amount=100.0,
+            currency="USD",
+            customer_id=uuid4(),
+            product_id=uuid4(),
+            quantity=1,
+        ),
+    ]
+
+    with patch("app.transactions.tasks.get_session") as mocked_session:
+        mocked_session.side_effect = lambda: iter([db_session])
+        process_transactions_file_local(path="dummy.csv", delimiter=";")
+
+    result = db_session.query(TransactionORMModel).all()
+    assert len(result) == 2
+
+
+@patch("app.transactions.tasks.TransactionsFileProcessor")
+def test_processor_should_skip_errors_rows(mock_processor_class, db_session):
+    mock_processor = mock_processor_class.return_value
+    duplicated_transaction_id = uuid4()
+    mock_processor.process_file.return_value = [
+        Transaction(
+            transaction_id=duplicated_transaction_id,
+            timestamp=datetime.now(timezone.utc),
+            amount=100.0,
+            currency="USD",
+            customer_id=uuid4(),
+            product_id=uuid4(),
+            quantity=1,
+        ),
+        TransactionRowError(
+            row_line=1,
+            error="Test Error",
         ),
         Transaction(
             transaction_id=uuid4(),

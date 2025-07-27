@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Iterator
 
 from celery import shared_task
@@ -12,6 +13,8 @@ from app.transactions.uploads.transactions_file_processor import (
     TransactionsFileProcessor,
 )
 from app.transactions.uploads.transactions_file_reader import StandardLocalTransactionsCSVFileReader
+
+logger = getLogger(__name__)
 
 
 def get_session() -> Iterator[Session]:
@@ -32,16 +35,14 @@ def process_transactions_file_local(path: str, delimiter: str) -> None:
 
     for result in processor.process_file():
         if isinstance(result, TransactionRowError):
+            logger.error(f"Error while processing row={result.row_line}: {result.error}")
             continue
         batch.append(result)
-
         if len(batch) >= BATCH_SIZE:
             _insert_batch(session, batch)
             batch.clear()
-
     if batch:
         _insert_batch(session, batch)
-
     session.commit()
 
 
