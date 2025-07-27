@@ -37,6 +37,11 @@ def test_get_customer_summary(db_session) -> None:
         customer_id=customer_id,
         quantity=1,
     )
+    transaction_4_for_different_customer = create_transaction(
+        db_session,
+        amount=500,
+        currency="PLN",
+    )
 
     response = client.get(app.url_path_for("customer-summary", customer_id=customer_id))
     response_json = response.json()
