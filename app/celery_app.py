@@ -8,7 +8,7 @@ celery_app = Celery("transactions_aggregator")
 celery_app.config_from_object(
     {
         "broker_url": settings.celery_broker_url,
-        "task_default_queue": settings.celery_queue,
+        "task_default_queue": settings.celery_default_queue_name,
         "task_ignore_result": True,
         "task_serializer": "json",
         "accept_content": ["json"],

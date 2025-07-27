@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session as get_session_global
+from app.core.settings import get_settings
 from app.transactions.models import Transaction as TransactionORMModel
 from app.transactions.uploads.transactions_file_processor import (
     Transaction,
@@ -24,7 +25,7 @@ def get_session() -> Iterator[Session]:
 BATCH_SIZE = 10000
 
 
-@shared_task
+@shared_task(queue=get_settings().celery_default_queue_name)
 def process_transactions_file_local(path: str, delimiter: str) -> None:
     processor = TransactionsFileProcessor(
         file_reader=StandardLocalTransactionsCSVFileReader(path, delimiter=delimiter),

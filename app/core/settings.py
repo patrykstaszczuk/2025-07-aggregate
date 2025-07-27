@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
 
     celery_broker_url: str = ""
-    celery_queue: str = ""
+    celery_default_queue_name: str = "default"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
