@@ -27,5 +27,27 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis:7
+    container_name: redis_broker
+    restart: always
+    ports:
+      - "6379:6379"
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    container_name: celery_worker
+    user: "1000:1000"
+    command: celery -A app.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+
 volumes:
   pgdata:

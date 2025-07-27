@@ -1,0 +1,2 @@
+class CSVHeaderInvalidException(Exception):
+    pass

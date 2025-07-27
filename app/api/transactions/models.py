@@ -12,3 +12,7 @@ class TransactionRead(BaseAPIModel):
     customer_id: UUID
     product_id: UUID
     quantity: int
+
+
+class TransactionsUploadRequestCreate(BaseAPIModel):
+    import_id: UUID
