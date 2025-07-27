@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.transactions.currency_rate_provider import Currency, SimpleCurrencyRateToPlnProvider
 from tests.factories import create_transaction
 from tests.integration.api.common import override_deps
 
@@ -62,10 +63,24 @@ def test_get_customer_summary(db_session) -> None:
     ]
 
 
-def test_should_raise_exception_if_transactions_are_in_unsupported_currency(db_session) -> None:
+def test_customer_summary_should_raise_exception_if_transactions_are_in_unsupported_currency(db_session) -> None:
     override_deps(db_session)
     unsupported_currency = "xxx"
     customer_id = uuid.uuid4()
     create_transaction(db_session, currency=unsupported_currency, customer_id=customer_id)
     response = client.get(app.url_path_for("customer-summary", customer_id=customer_id))
     assert response.status_code == 400
+
+
+def test_get_product_summary(db_session) -> None:
+    override_deps(db_session)
+    product_id = uuid.uuid4()
+    transaction_1_eur = create_transaction(db_session, product_id=product_id, quantity=10, currency="EUR", amount=100)
+    transaction_2_pln = create_transaction(db_session, product_id=product_id, quantity=20, currency="PLN", amount=400)
+    transaction_3_different_product = create_transaction(db_session)
+
+    response = client.get(app.url_path_for("product-summary", product_id=product_id))
+    response_json = response.json()
+
+    rate_for_eur = SimpleCurrencyRateToPlnProvider._RATES[Currency.EUR]
+    assert response.status_code == 200

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -8,7 +8,7 @@ from app.core.session import get_session
 from app.transactions.currency_rate_provider import UnsupportedCurrency
 
 from ...transactions.models import Transaction
-from .models import CustomerSummaryRead
+from .models import CustomerSummaryRead, ProductSummaryRead
 from .queries import (
     get_last_transaction_timestamp_for_customer,
     get_total_cost_pln_for_customer,
@@ -25,7 +25,7 @@ router = APIRouter(
 
 @router.get("/customer-summary/{customer_id})", name="customer-summary", response_model=CustomerSummaryRead)
 def get_customer_summary(
-    customer_id: UUID,
+    customer_id: UUID = Path(),
     session: Session = Depends(get_session),
 ):
     transaction_count = session.execute(
@@ -43,3 +43,11 @@ def get_customer_summary(
         unique_products_count=get_unique_products_count_for_customer(session, customer_id=customer_id),
         last_transaction_timestamp=get_last_transaction_timestamp_for_customer(session, customer_id=customer_id),
     )
+
+
+@router.get("/products-summary/{product_id}", name="product-summary", response_model=ProductSummaryRead)
+def get_product_summary(
+    product_id: UUID = Path(),
+    session: Session = Depends(get_session),
+):
+    return ProductSummaryRead()
