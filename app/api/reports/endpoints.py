@@ -11,7 +11,10 @@ from ...transactions.models import Transaction
 from .models import CustomerSummaryRead, ProductSummaryRead
 from .queries import (
     get_last_transaction_timestamp_for_customer,
+    get_sold_qty_of_product,
     get_total_cost_pln_for_customer,
+    get_total_income_for_product_in_pln,
+    get_total_number_of_unique_customers_for_product,
     get_unique_products_count_for_customer,
 )
 
@@ -50,4 +53,9 @@ def get_product_summary(
     product_id: UUID = Path(),
     session: Session = Depends(get_session),
 ):
-    return ProductSummaryRead()
+
+    return ProductSummaryRead(
+        sold_qty=get_sold_qty_of_product(session, product_id=product_id),
+        total_income_pln=get_total_income_for_product_in_pln(session, product_id=product_id),
+        total_number_of_customers=get_total_number_of_unique_customers_for_product(session, product_id=product_id),
+    )

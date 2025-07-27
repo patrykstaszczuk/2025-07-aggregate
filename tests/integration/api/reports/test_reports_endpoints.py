@@ -84,3 +84,10 @@ def test_get_product_summary(db_session) -> None:
 
     rate_for_eur = SimpleCurrencyRateToPlnProvider._RATES[Currency.EUR]
     assert response.status_code == 200
+
+    assert response_json["sold_qty"] == 30
+    assert response_json["total_income_pln"] == (
+        transaction_2_pln.amount * transaction_2_pln.quantity
+        + (transaction_1_eur.amount * transaction_1_eur.quantity) * rate_for_eur
+    )
+    assert response_json["total_number_of_customers"] == 2
