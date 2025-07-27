@@ -1,11 +1,13 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
 from app.transactions.currency_rate_provider import UnsupportedCurrency
 
+from ...transactions.models import Transaction
 from .models import CustomerSummaryRead
 from .queries import (
     get_last_transaction_timestamp_for_customer,
@@ -26,6 +28,11 @@ def get_customer_summary(
     customer_id: UUID,
     session: Session = Depends(get_session),
 ):
+    transaction_count = session.execute(
+        select(func.count(Transaction.transaction_id)).where(Transaction.customer_id == customer_id),
+    ).scalar()
+    if not transaction_count:
+        raise HTTPException(status_code=404, detail=f"No transactions for customer={customer_id}")
     try:
         total_cost_pln = get_total_cost_pln_for_customer(session, customer_id=customer_id)
     except UnsupportedCurrency as e:

@@ -24,6 +24,11 @@ def get_last_transaction_timestamp_for_customer(session: Session, customer_id: U
 
 
 def get_total_cost_pln_for_customer(session: Session, customer_id: UUID) -> float | None:
+    transaction_count = session.execute(
+        select(func.count(Transaction.transaction_id)).where(Transaction.customer_id == customer_id),
+    ).scalar()
+    if not transaction_count:
+        return 0.0
     curr_converter = SimpleCurrencyRateToPlnProvider()
     currencies_in_transactions = session.execute(
         select(distinct(Transaction.currency)).where(Transaction.customer_id == customer_id),
