@@ -26,3 +26,13 @@ def db_session(db_engine):
     session.close()
     transaction.rollback()
     connection.close()
+
+
+@pytest.fixture(scope="session")
+def celery_config():
+    return {
+        "broker_url": "memory://",
+        "result_backend": "rpc://",
+        "task_always_eager": True,
+        "task_eager_propagates": True,
+    }

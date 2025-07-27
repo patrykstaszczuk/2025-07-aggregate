@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+RUN addgroup --gid 1000 celerygroup && \
+    adduser --disabled-password --gecos "" --uid 1000 --gid 1000 celeryuser
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+USER celeryuser

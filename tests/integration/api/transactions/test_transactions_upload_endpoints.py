@@ -1,5 +1,7 @@
 from io import BytesIO
+from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core.media import get_media_dir
@@ -9,7 +11,12 @@ from tests.integration.api.common import override_deps
 client = TestClient(app)
 
 
-def test_transactions_upload_should_save_file_to_future_processing_and_return_201(db_session, tmp_path) -> None:
+@pytest.mark.usefixtures("celery_session_app")
+@pytest.mark.usefixtures("celery_session_worker")
+def test_transactions_upload_should_save_file_to_future_processing_return_201_and_invoke_celery_task(
+    db_session,
+    tmp_path,
+) -> None:
     override_deps(db_session)
     app.dependency_overrides[get_media_dir] = lambda: str(tmp_path / "media")
 
@@ -21,17 +28,18 @@ def test_transactions_upload_should_save_file_to_future_processing_and_return_20
 
     fake_file.name = "test.csv"
 
-    response = client.post(
-        app.url_path_for("transactions-upload") + "?delimiter=,",
-        files={"file": ("test.csv", fake_file, "text/csv")},
-    )
-    response_json = response.json()
+    with patch("app.api.transactions.endpoints.process_transactions_file_local.delay") as mock_celery_task:
+        response = client.post(
+            app.url_path_for("transactions-upload") + "?delimiter=,",
+            files={"file": ("test.csv", fake_file, "text/csv")},
+        )
+        response_json = response.json()
+        saved_file_path = tmp_path / "media" / "transactions" / f"{response_json['import_id']}.csv"
 
-    assert response.status_code == 201
-    assert "import_id" in response_json
-
-    saved_file_path = tmp_path / "media" / "transactions" / f"{response_json['import_id']}.csv"
-    assert saved_file_path.exists()
+        assert response.status_code == 201
+        assert "import_id" in response_json
+        mock_celery_task.assert_called_once()
+        assert saved_file_path.exists()
 
 
 def test_should_return_400_if_file_has_invalid_header(db_session, tmp_path) -> None:

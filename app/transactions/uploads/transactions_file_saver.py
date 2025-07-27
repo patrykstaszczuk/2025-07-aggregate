@@ -26,16 +26,16 @@ class TransactionsCsvFileSaver(ABC):
         return header == self._FILE_HEADER
 
     @abstractmethod
-    def save(self, import_id: UUID, file: UploadFile) -> None: ...
+    def save(self, import_id: UUID, file: UploadFile) -> str: ...
 
 
 class S3TransactionsCsvFileSaver(TransactionsCsvFileSaver):
-    def save(self, import_id: UUID, file: UploadFile) -> None:
+    def save(self, import_id: UUID, file: UploadFile) -> str:
         raise NotImplementedError
 
 
 class LocalTransactionsCsvFileSaver(TransactionsCsvFileSaver):
-    def save(self, import_id: UUID, file: UploadFile) -> None:
+    def save(self, import_id: UUID, file: UploadFile) -> str:
         header_bytes = file.file.readline()
         is_valid = self._validate_header(header=header_bytes.decode("utf-8").strip().split(self._delimiter))
         if not is_valid:
@@ -47,3 +47,4 @@ class LocalTransactionsCsvFileSaver(TransactionsCsvFileSaver):
         with open(save_path, "wb") as out_file:
             content = file.file.read()
             out_file.write(content)
+        return save_path

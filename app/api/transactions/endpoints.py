@@ -1,4 +1,3 @@
-import os
 import uuid
 from uuid import UUID
 
@@ -10,6 +9,7 @@ from app.api.pagination import PaginatedInput, PaginatedResponse, Paginator
 from app.core.media import get_media_dir
 from app.core.session import get_session
 from app.transactions.models import Transaction
+from app.transactions.tasks import process_transactions_file_local
 from app.transactions.uploads import CSVHeaderInvalidException, LocalTransactionsCsvFileSaver
 
 from .models import TransactionRead, TransactionsUploadRequestCreate
@@ -61,7 +61,12 @@ def upload_transactions(
 ):
     import_id = uuid.uuid4()
     try:
-        LocalTransactionsCsvFileSaver(media_dir=media_dir, delimiter=delimiter).save(import_id=import_id, file=file)
+        path = LocalTransactionsCsvFileSaver(media_dir=media_dir, delimiter=delimiter).save(
+            import_id=import_id,
+            file=file,
+        )
     except CSVHeaderInvalidException as e:
         raise HTTPException(status_code=400, detail=str(e))
+    else:
+        process_transactions_file_local.delay(path=path)
     return TransactionsUploadRequestCreate(import_id=import_id)

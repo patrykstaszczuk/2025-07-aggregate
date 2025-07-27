@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     postgres_host: str = "localhost"
     postgres_port: int = 5432
 
+    celery_broker_url: str = ""
+    celery_queue: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
