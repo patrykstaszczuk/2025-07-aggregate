@@ -10,6 +10,7 @@ from app.api.pagination import PaginatedInput, PaginatedResponse, Paginator
 from app.core.media import get_media_dir
 from app.core.session import get_session
 from app.transactions.models import Transaction
+from app.transactions.uploads import LocalTransactionsCsvFileSaver
 
 from .models import TransactionRead, TransactionsUploadRequestCreate
 
@@ -58,10 +59,5 @@ async def upload_transactions(
     media_dir: str = Depends(get_media_dir),
 ):
     import_id = uuid.uuid4()
-    save_path = os.path.join(media_dir, f"transactions/{import_id}.csv")
-    os.makedirs(f"{media_dir}/transactions", exist_ok=True)
-
-    with open(save_path, "wb") as out_file:
-        content = await file.read()
-        out_file.write(content)
+    await LocalTransactionsCsvFileSaver(media_dir=media_dir).save(import_id=import_id, file=file)
     return TransactionsUploadRequestCreate(import_id=import_id)
