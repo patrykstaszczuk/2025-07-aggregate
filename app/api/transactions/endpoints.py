@@ -1,7 +1,8 @@
 import uuid
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -23,8 +24,15 @@ router = APIRouter(
 )
 
 
-@router.get("/{transaction_id}", name="transaction-details", response_model=TransactionRead)
-async def get_transaction(transaction_id: UUID, session: Session = Depends(get_session)):
+@router.get(
+    "/{transaction_id}",
+    name="transaction-details",
+    response_model=TransactionRead,
+)
+async def get_transaction(
+    transaction_id: Annotated[UUID, Path],
+    session: Annotated[Session, Depends(get_session)],
+):
     statement = select(Transaction).where(Transaction.transaction_id == transaction_id)
     obj = session.execute(statement).scalar_one_or_none()
     if not obj:
@@ -32,12 +40,16 @@ async def get_transaction(transaction_id: UUID, session: Session = Depends(get_s
     return TransactionRead.model_validate(obj)
 
 
-@router.get("/", name="transaction-list", response_model=PaginatedResponse[TransactionRead])
+@router.get(
+    "/",
+    name="transaction-list",
+    response_model=PaginatedResponse[TransactionRead],
+)
 async def get_transaction_list(
-    session: Session = Depends(get_session),
-    pagination_input: PaginatedInput = Depends(),
-    customer_id: UUID | None = None,
-    product_id: UUID | None = None,
+    session: Annotated[Session, Depends(get_session)],
+    pagination_input: Annotated[PaginatedInput, Depends()],
+    customer_id: Annotated[UUID | None, Query()] = None,
+    product_id: Annotated[UUID | None, Query()] = None,
 ):
     statement = select(Transaction)
     if customer_id:
@@ -53,11 +65,16 @@ async def get_transaction_list(
     return paginator.paginate(session)
 
 
-@router.post("/upload", name="transactions-upload", response_model=TransactionsUploadRequestCreate, status_code=201)
+@router.post(
+    "/upload",
+    name="transactions-upload",
+    response_model=TransactionsUploadRequestCreate,
+    status_code=201,
+)
 def upload_transactions(
-    file: UploadFile = File(),
-    delimiter: str = Query(),
-    media_dir: str = Depends(get_media_dir),
+    file: Annotated[UploadFile, File()],
+    delimiter: Annotated[str, Query()],
+    media_dir: Annotated[str, Depends(get_media_dir)],
 ):
     import_id = uuid.uuid4()
     try:

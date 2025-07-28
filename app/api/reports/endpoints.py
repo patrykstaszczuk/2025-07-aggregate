@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -27,10 +28,10 @@ router = APIRouter(
 )
 
 
-@router.get("/customer-summary/{customer_id})", name="customer-summary", response_model=CustomerSummaryRead)
+@router.get("/customer-summary/{customer_id}", name="customer-summary", response_model=CustomerSummaryRead)
 def get_customer_summary(
-    customer_id: UUID = Path(),
-    session: Session = Depends(get_session),
+    customer_id: Annotated[UUID, Path()],
+    session: Annotated[Session, Depends(get_session)],
 ):
     transaction_count = session.execute(
         select(func.count(Transaction.transaction_id)).where(Transaction.customer_id == customer_id),
@@ -51,8 +52,8 @@ def get_customer_summary(
 
 @router.get("/products-summary/{product_id}", name="product-summary", response_model=ProductSummaryRead)
 def get_product_summary(
-    product_id: UUID = Path(),
-    session: Session = Depends(get_session),
+    product_id: Annotated[UUID, Path()],
+    session: Annotated[Session, Depends(get_session)],
 ):
     transaction_count = session.execute(
         select(func.count(Transaction.transaction_id)).where(Transaction.product_id == product_id),
