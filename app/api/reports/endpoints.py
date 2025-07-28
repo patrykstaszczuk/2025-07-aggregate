@@ -4,10 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.api.authentication import ensure_authenticated
 from app.core.session import get_session
 from app.transactions.currency_rate_provider import UnsupportedCurrency
+from app.transactions.models import Transaction
 
-from ...transactions.models import Transaction
 from .models import CustomerSummaryRead, ProductSummaryRead
 from .queries import (
     get_last_transaction_timestamp_for_customer,
@@ -21,7 +22,7 @@ from .queries import (
 router = APIRouter(
     prefix="/reports",
     tags=["reports"],
-    dependencies=[],
+    dependencies=[Depends(ensure_authenticated)],
     responses={404: {"description": "Not found"}},
 )
 

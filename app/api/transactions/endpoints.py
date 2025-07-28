@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.authentication import ensure_authenticated
 from app.api.pagination import PaginatedInput, PaginatedResponse, Paginator
 from app.core.media import get_media_dir
 from app.core.session import get_session
@@ -17,7 +18,7 @@ from .models import TransactionRead, TransactionsUploadRequestCreate
 router = APIRouter(
     prefix="/transactions",
     tags=["transactions"],
-    dependencies=[],
+    dependencies=[Depends(ensure_authenticated)],
     responses={404: {"description": "Not found"}},
 )
 
@@ -56,7 +57,6 @@ async def get_transaction_list(
 def upload_transactions(
     file: UploadFile = File(),
     delimiter: str = Query(),
-    session: Session = Depends(get_session),
     media_dir: str = Depends(get_media_dir),
 ):
     import_id = uuid.uuid4()
