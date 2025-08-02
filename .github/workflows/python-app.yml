@@ -30,9 +30,6 @@ jobs:
     - name: Create .env file and export env variables
       run: |
         echo "${{ secrets.ENV_CONTENT }}" > .env
-        while IFS='=' read -r key value; do
-          echo "$key=$value" >> $GITHUB_ENV
-        done < .env
     - name: Test with pytest
       run: |
         python3 -m pytest
