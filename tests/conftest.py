@@ -32,7 +32,7 @@ def db_session(db_engine):
 def celery_config():
     return {
         "broker_url": "memory://",
-        "result_backend": "rpc://",
+        "result_backend": None,
         "task_always_eager": True,
         "task_eager_propagates": True,
     }

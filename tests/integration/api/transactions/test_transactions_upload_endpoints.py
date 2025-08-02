@@ -13,7 +13,6 @@ from tests.integration.api.common import override_deps
 client = TestClient(app)
 
 
-@pytest.mark.usefixtures("celery_session_app")
 @pytest.mark.usefixtures("celery_session_worker")
 @patch("app.transactions.tasks.get_session")
 def test_transactions_upload_should_save_file_to_future_processing_return_201_and_invoke_celery_task(
