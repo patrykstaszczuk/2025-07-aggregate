@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Python application
 
 on:
@@ -28,11 +25,14 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
-        # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude alembic,tests
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Create .env file and export env variables
+      run: |
+        echo "${{ secrets.ENV_CONTENT }}" > .env
+        while IFS='=' read -r key value; do
+          echo "$key=$value" >> $GITHUB_ENV
+        done < .env
     - name: Test with pytest
       run: |
         python3 -m pytest
-        
