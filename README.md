@@ -20,6 +20,8 @@ docker-compose -f docker-compose-dev.yml up
 ```
 
 ## Testy
+Do uruchomienia testów potrzebujesz pliku .env
+
 Projekt posiada testy integracyjne oraz jednostkowe. Do uruchomienia testów potrzebujesz pytest. Testy uruchamiasz poleceniem:
 `python -m pytest`
 
